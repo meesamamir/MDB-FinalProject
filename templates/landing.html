@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="login-form">
+    <h2>Login</h2>
+    <form method="POST">
+        <input type="text" name="user_id" placeholder="Enter User ID" required>
+        <button type="submit">Login</button>
+    </form>
+    <a href="{{ url_for('signup') }}">Sign Up</a>
+    {% if error %}
+    <p class="error">{{ error }}</p>
+    {% endif %}
+</div>
+{% endblock %}
