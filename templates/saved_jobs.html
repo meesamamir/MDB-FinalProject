@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>Saved Jobs</h1>
+<div class="row">
+    {% for job in saved_jobs %}
+        <div class="col s12 m6">
+            <div class="card">
+                <div class="card-content">
+                    <span class="card-title">{{ job.job_title }}</span>
+                    <p>Location: {{ job.location }}</p>
+                    <p>Salary: {{ job.salary_range }}</p>
+                </div>
+                <div class="card-action">
+                    <a href="{{ url_for('remove_job', job_id=job.job_id) }}" class="btn red lighten-1">Remove Job</a>
+                </div>
+            </div>
+        </div>
+    {% endfor %}
+</div>
+{% endblock %}

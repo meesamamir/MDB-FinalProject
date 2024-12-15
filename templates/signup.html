@@ -1,25 +1,73 @@
 {% extends "base.html" %}
+
 {% block content %}
-<div class="signup-form">
-    <h2>Sign Up</h2>
-    <form method="POST">
-        <input type="text" name="name" placeholder="Name" required>
-        <input type="number" name="experience" placeholder="Experience (Years)" required>
-        <input type="text" name="preferred_location" placeholder="Preferred Location" required>
-        <select name="work_type">
-            <option>Full-Time</option>
-            <option>Remote</option>
-        </select>
-        <label>Skills:</label>
-        <select multiple name="skills">
-            <option>Python</option>
-            <option>SQL</option>
-            <option>Machine Learning</option>
-        </select>
-        <button type="submit">Sign Up</button>
-    </form>
-    {% if success %}
-    <p>{{ success }}</p>
-    {% endif %}
-</div>
+<h2>Create an Account</h2>
+{% if success %}
+    <p class="green-text">{{ success }}</p>
+{% endif %}
+<h6>(*) indicates required field</h6>
+<form method="POST" action="{{ url_for('signup') }}">
+    <div class="row">
+        <div class="input-field col s12">
+            <input id="name" name="name" type="text" required>
+            <label for="name">Full Name *</label>
+        </div>
+        <div class="input-field col s12">
+            <input id="email" name="email" type="email" required>
+            <label for="email">Email *</label>
+        </div>
+        <div class="input-field col s12">
+            <input id="password" name="password" type="password" required>
+            <label for="password">Password *</label>
+        </div>
+
+        <div class="input-field col s12">
+            <select id="gender" name="gender">
+                <option value="" disabled selected>Choose your option</option>
+                <option value="Male">Male</option>
+                <option value="Female">Female</option>
+                <option value="Other">Other</option>
+                <option value="Prefer not to say">Prefer not to say</option>
+            </select>
+            <label for="gender">Gender</label>
+        </div>
+        
+        
+        <div class="input-field col s12">
+            <input id="skills" name="skills" type="text" placeholder="e.g., Python, SQL">
+            <label for="skills">Skills (comma-separated)</label>
+        </div>
+        <div class="input-field col s12">
+            <input id="experience" name="experience" type="text" placeholder="Number of years of experience..." required>
+            <label for="experience">Years of Experience</label>
+        </div>
+        <div class="input-field col s12">
+            <input id="preferred_location" name="preferred_location" type="text" required>
+            <label for="preferred_location">Preferred Location</label>
+        </div>
+        <div class="input-field col s12">
+            <select id="work_type" name="work_type" required>
+                <option value="" disabled selected>Choose your option</option>
+                <option value="Intern">Intern</option>
+                <option value="Full-Time">Full-Time</option>
+                <option value="Part-Time">Part-Time</option>
+                <option value="Contract">Contract</option>
+                <option value="Temporary">Temporary</option>
+            </select>
+            <label for="work_type">Work Type</label>
+        </div>
+        <div class="input-field col s12">
+            <input id="preferred_industry" name="preferred_industry" type="text">
+            <label for="preferred_industry">Preferred Industry</label>
+        </div>
+        <div class="input-field col s12">
+            <input id="linkedin_profile" name="linkedin_profile" type="url">
+            <label for="linkedin_profile">LinkedIn Profile</label>
+        </div>
+        
+        <button type="submit" class="btn blue lighten-1">Sign Up</button>
+        <a href="{{ url_for('main') }}" class="btn red lighten-1">Cancel</a>
+        
+    </div>
+</form>
 {% endblock %}

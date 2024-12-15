@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>Profile</h1>
+
+<form method="POST" action="{{ url_for('profile') }}">
+    <div class="row">
+        <div class="input-field col s12">
+            <input id="name" name="name" type="text" value="{{ user.user.name }}" required>
+            <label for="name" class="active">Full Name</label>
+        </div>
+        <div class="input-field col s12">
+            <select id="gender" name="gender">
+                <option value="" disabled selected>Choose your option</option>
+                <option value="Male" {% if user.user_personal.gender == "Male" %}selected{% endif %}>Male</option>
+                <option value="Female" {% if user.user_personal.gender == "Female" %}selected{% endif %}>Female</option>
+                <option value="Other" {% if user.user_personal.gender == "Other" %}selected{% endif %}>Other</option>
+                <option value="Prefer not to say" {% if user.user_personal.gender == "Prefer not to say" %}selected{% endif %}>Prefer not to say</option>
+            </select>
+            <label for="gender" class="active">Gender</label>
+        </div>
+        <div class="input-field col s12">
+            <input id="skills" name="skills" type="text" value="{{ user.user_personal.skills | join(', ') }}" required>
+            <label for="skills" class="active">Skills (comma-separated)</label>
+        </div>
+        <div class="input-field col s12">
+            <input id="experience" name="experience" type="number" value="{{ user.user_personal.experience }}" required>
+            <label for="experience" class="active">Years of Experience</label>
+        </div>
+        <div class="input-field col s12">
+            <input id="preferred_location" name="preferred_location" type="text" value="{{ user.user_personal.preferred_location }}" required>
+            <label for="preferred_location" class="active">Preferred Location</label>
+        </div>
+        <br>
+        <div class="input-field col s12">
+            <select id="work_type" name="work_type" required>
+                <option value="" disabled selected>Choose your option</option>
+                <option value="Intern" {% if user.user_personal.work_type == "Intern" %}selected{% endif %}>Intern</option>
+                <option value="Full-Time" {% if user.user_personal.work_type == "Full-Time" %}selected{% endif %}>Full-Time</option>
+                <option value="Part-Time" {% if user.user_personal.work_type == "Part-Time" %}selected{% endif %}>Part-Time</option>
+                <option value="Contract" {% if user.user_personal.work_type == "Contract" %}selected{% endif %}>Contract</option>
+                <option value="Temporary" {% if user.user_personal.work_type == "Temporary" %}selected{% endif %}>Temporary</option>
+            </select>
+            <label for="work_type" class="active">Work Type</label>
+        </div>
+        <div class="input-field col s12">
+            <input id="preferred_industry" name="preferred_industry" type="text" value="{{ user.user_personal.preferred_industry }}">
+            <label for="preferred_industry" class="active">Preferred Industry</label>
+        </div>
+        <div class="input-field col s12">
+            <input id="linkedin_profile" name="linkedin_profile" type="url" value="{{ user.user_personal.linkedin_profile }}">
+            <label for="linkedin_profile" class="active">LinkedIn Profile</label>
+        </div>
+        
+        <button type="submit" class="btn blue lighten-1">Update Profile</button>
+        <a href="{{ url_for('main') }}" class="btn red lighten-1">Cancel</a>
+
+    </div>
+</form>
+{% endblock %}

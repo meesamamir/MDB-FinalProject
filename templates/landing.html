@@ -1,14 +1,20 @@
 {% extends "base.html" %}
+
 {% block content %}
-<div class="login-form">
-    <h2>Login</h2>
-    <form method="POST">
-        <input type="text" name="user_id" placeholder="Enter User ID" required>
-        <button type="submit">Login</button>
-    </form>
-    <a href="{{ url_for('signup') }}">Sign Up</a>
+<div class="center-align">
+    <h1>Welcome to JobFusion</h1>
     {% if error %}
-    <p class="error">{{ error }}</p>
+        <p class="red-text">{{ error }}</p>
     {% endif %}
+    <div class="row">
+        <form class="col s12" method="POST" action="{{ url_for('landing') }}">
+            <div class="input-field">
+                <input id="user_id" name="user_id" type="number" required>
+                <label for="user_id">User ID</label>
+            </div>
+            <button type="submit" class="btn blue lighten-1">Login</button>
+        </form>
+    </div>
+    <p>Don't have an account? <a href="{{ url_for('signup') }}">Sign up here</a>.</p>
 </div>
 {% endblock %}

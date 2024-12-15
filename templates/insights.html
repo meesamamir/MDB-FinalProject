@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>Insights</h1>
+
+<h2>Most In-Demand Skills</h2>
+<ul class="collection">
+    {% for trend in skill_trends %}
+        <li class="collection-item">{{ trend.skill }}: {{ trend.demand }} jobs</li>
+    {% endfor %}
+</ul>
+
+<h2>Potential Career Paths</h2>
+<ul class="collection">
+    {% for path in career_paths %}
+        <li class="collection-item">{{ path.next_role }} ({{ path.frequency }} times)</li>
+    {% endfor %}
+</ul>
+
+<h2>Top Cities for Jobs</h2>
+<ul class="collection">
+    {% for city in best_cities %}
+        <li class="collection-item">{{ city._id }}: {{ city.job_count }} jobs</li>
+    {% endfor %}
+</ul>
+{% endblock %}
