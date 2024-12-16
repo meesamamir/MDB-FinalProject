@@ -285,7 +285,7 @@ def saved_jobs():
         return redirect(url_for("landing"))
     
     user = users_collection.find_one({"user.user_id": session['user_id']})
-    saved_jobs = jobs_collection.find({"Job Id": {"$in": [int(x) for xuser["user_job_preferences"]["saved_jobs"]}})
+    saved_jobs = jobs_collection.find({"Job Id": {"$in": [int(x) for x user["user_job_preferences"]["saved_jobs"]}})
     return render_template("saved_jobs.html", saved_jobs=saved_jobs)
 
 
