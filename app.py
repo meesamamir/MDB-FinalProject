@@ -1,10 +1,7 @@
 from datetime import datetime
-<<<<<<< Updated upstream
 import re
 from flask import Flask, render_template, request, redirect, url_for, session
-=======
 from flask import Flask, jsonify, render_template, request, redirect, url_for, session
->>>>>>> Stashed changes
 from pymongo import MongoClient
 from py2neo import Graph
 import uuid
