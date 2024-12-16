@@ -1,65 +1,119 @@
 {% extends "base.html" %}
 
 {% block content %}
-<h1>Welcome, {{ user.user.name }}</h1>
+<div class="container">
+    <h3 class="center-align">Welcome, {{ user.user.name }}!</h3>
 
-<br>
-<form method="POST" action="{{ url_for('main') }}">
-    <div class="input-field">
-        <input type="text" id="search_query" name="search_query" placeholder="Search for jobs..." required>
-        <label for="search_query">Search</label>
+    <!-- Search Bar -->
+    <form method="POST" action="{{ url_for('main') }}" class="row">
+        <div class="input-field col s12">
+            <input id="search_query" name="search_query" type="text" placeholder="Search for jobs...">
+            <label for="search_query">Search Jobs</label>
+            <button type="submit" class="btn blue lighten-1">Search</button>
+        <!-- </div>
+        <div class="col s12 center-align">
+            <button type="submit" class="btn blue lighten-1">Search</button>
+        </div> -->
+    </form>
+
+    <!-- Search Results -->
+    <h5>Search Results</h5>
+    <div class="scrollable-container">
+        {% if search_results %}
+            <table class="highlight">
+                <thead>
+                    <tr>
+                        <th>Job Title</th>
+                        <th>Company Name</th>
+                        <th>City</th>
+                        <th>Salary Range</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for job in search_results %}
+                        <tr>
+                            <td>{{ job['Job Title'] }}</td>
+                            <td>{{ job['Company'] }}</td>
+                            <td>{{ job['location'] }}</td>
+                            <td>{{ job['Salary Range'] }}</td>
+                            <td>
+                                <button class="btn green save-btn" data-job-id="{{ job['Job Id'] }}">Save</button>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p>No search results found.</p>
+        {% endif %}
     </div>
-    <button type="submit" class="btn blue lighten-1">Search</button>
-</form>
 
-{% if search_results %}
-<h2>Search Results</h2>
-<div class="row">
-    {% for result in search_results %}
-        <div class="col s12 m6">
-            <div class="card">
-                <div class="card-content">
-                    <span class="card-title">{{ result.job_title }}</span>
-                    <p>Location: {{ result.location }}</p>
-                </div>
-            </div>
-        </div>
-    {% endfor %}
+    <!-- Relevant Jobs -->
+    <h5>Relevant Jobs</h5>
+    <div class="scrollable-container">
+        {% if relevant_jobs %}
+            <table class="highlight">
+                <thead>
+                    <tr>
+                        <th>Job Title</th>
+                        <th>Company Name</th>
+                        <th>City</th>
+                        <th>Salary Range</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for job in relevant_jobs %}
+                        <tr>
+                            <td>{{ job['Job Title'] }}</td>
+                            <td>{{ job['Company'] }}</td>
+                            <td>{{ job['location'] }}</td>
+                            <td>{{ job['Salary Range'] }}</td>
+                            <td>
+                                <button class="btn green save-btn" data-job-id="{{ job['Job Id'] }}">Save</button>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p>No relevant jobs found.</p>
+        {% endif %}
+    </div>
 </div>
-{% endif %}
 
-<h2>Job Recommendations</h2>
-<div class="row">
-    {% for job in recommendations %}
-        <div class="col s12 m6">
-            <div class="card">
-                <div class="card-content">
-                    <span class="card-title">{{ job.title }}</span>
-                    <p>Location: {{ job.location }}</p>
-                    <p>Salary: {{ job.salary_range }}</p>
-                </div>
-            </div>
-        </div>
-    {% endfor %}
-</div>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const saveButtons = document.querySelectorAll('.save-btn');
+    
+    saveButtons.forEach(button => {
+        button.addEventListener('click', (event) => {
+            event.preventDefault();  // Prevent page reload
 
-<h2>Relevant Jobs</h2>
-<div class="row">
-    {% for job in relevant_jobs %}
-        <div class="col s12 m6">
-            <div class="card">
-                <div class="card-content">
-                    <span class="card-title">{{ job.job_title }}</span>
-                    <p>Location: {{ job.location }}</p>
-                    <p>Salary: {{ job.salary_range }}</p>
-                </div>
-                <div class="card-action">
-                    <a href="{{ url_for('save_job', job_id=job.job_id) }}" class="btn blue lighten-1">Save Job</a>
-                </div>
-            </div>
-        </div>
-    {% endfor %}
-</div>
+            const jobId = button.dataset.jobId;  // Fetch the job ID from data attribute
+
+            // Send an AJAX request to save the job
+            fetch(`/save_job/${jobId}`, {
+                method: 'GET'
+            })
+            .then(response => {
+                if (response.ok) {
+                    button.textContent = 'Saved';  // Update button text
+                    button.classList.remove('green');
+                    button.classList.add('grey');  // Change button color
+                } else {
+                    alert('Failed to save job. Please try again.');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred. Please try again.');
+            });
+        });
+    });
+});
+</script>
 
 
 {% endblock %}

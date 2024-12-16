@@ -32,7 +32,6 @@
             <label for="gender">Gender</label>
         </div>
         
-        
         <div class="input-field col s12">
             <input id="skills" name="skills" type="text" placeholder="e.g., Python, SQL">
             <label for="skills">Skills (comma-separated)</label>
@@ -64,10 +63,19 @@
             <input id="linkedin_profile" name="linkedin_profile" type="url">
             <label for="linkedin_profile">LinkedIn Profile</label>
         </div>
+
+        <!-- Salary Range -->
+        <div class="input-field col s6">
+            <input id="salary_min" name="salary_min" type="number" placeholder="Minimum Salary">
+            <label for="salary_min">Preferred Min Salary</label>
+        </div>
+        <div class="input-field col s6">
+            <input id="salary_max" name="salary_max" type="number" placeholder="Maximum Salary">
+            <label for="salary_max">Preferred Max Salary</label>
+        </div>
         
         <button type="submit" class="btn blue lighten-1">Sign Up</button>
         <a href="{{ url_for('main') }}" class="btn red lighten-1">Cancel</a>
-        
     </div>
 </form>
 {% endblock %}

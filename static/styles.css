@@ -63,3 +63,13 @@ button {
     font-size: 18px; 
     font-weight: 600;
 }
+
+.scrollable-container {
+    height: 400px; /* Fixed height */
+    overflow-y: auto; /* Vertical scrollbar */
+    border: 1px solid #ccc; /* Optional: Border for visual separation */
+    padding: 10px;
+    margin-bottom: 20px;
+    background-color: #f9f9f9; /* Light background for contrast */
+}
+

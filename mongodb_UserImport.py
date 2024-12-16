@@ -46,7 +46,10 @@ else:
                 "linkedin_profile": "https://linkedin.com/in/johndoe"
             },
             "user_job_preferences": {
-                "preferred_salary_range": "$80,000 - $100,000",
+                "preferred_salary_range": {
+                    "min": 80000,  # Minimum salary as integer
+                    "max": 100000  # Maximum salary as integer
+                },
                 "preferred_roles": ["Data Scientist", "AI Engineer"],
                 "upskilling_interest": ["Cloud Computing", "Deep Learning"],
                 "saved_jobs": []
@@ -69,9 +72,12 @@ else:
                 "linkedin_profile": "https://linkedin.com/in/janesmith"
             },
             "user_job_preferences": {
-                "preferred_salary_range": "$70,000 - $90,000",
-                "preferred_roles": ["Frontend Developer"],
-                "upskilling_interest": ["GraphQL", "TypeScript"],
+                "preferred_salary_range": {
+                    "min": 80000,  # Minimum salary as integer
+                    "max": 100000  # Maximum salary as integer
+                },
+                "preferred_roles": ["Data Scientist", "AI Engineer"],
+                "upskilling_interest": ["Cloud Computing", "Deep Learning"],
                 "saved_jobs": []
             }
         }

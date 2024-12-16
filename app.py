@@ -1,4 +1,5 @@
 from datetime import datetime
+import re
 from flask import Flask, render_template, request, redirect, url_for, session
 from pymongo import MongoClient
 from py2neo import Graph
@@ -36,11 +37,40 @@ def verify_connection():
         print(f"\n------ Failed to connect to Neo4j: {error} ------\n")
         raise error
 
+# Verify the MongoDB and Neo4j connections
 verify_connection()
-# Set up Neo4j connection
 
+def setup():
+    """Sets up necessary indexes in MongoDB."""
+    try:
+        # Check existing indexes
+        existing_indexes = jobs_collection.index_information()
+        if "job_text_index" not in existing_indexes:
+            # Create full-text index if it doesn't already exist
+            jobs_collection.create_index([
+                ("Job Title", "text"),
+                ("Role", "text"),
+                ("skills", "text"),
+                ("Job Description", "text"),
+                ("Company", "text"),
+                ("location", "text")
+            ], name="job_text_index")
+            print("\nFull-text index 'job_text_index' created successfully.\n")
+        else:
+            print("\nFull-text index 'job_text_index' already exists.\n")
 
-# neo4j_graph = Graph(NEO4J_URI, auth=(NEO4J_USER, NEO4J_PASSWORD))
+        # # Create geospatial index for latitude and longitude
+        # if "job_location_index" not in jobs_collection.index_information():
+        #     jobs_collection.create_index([("location", "2dsphere")])
+        #     print("\nGeospatial index created successfully.\n")
+
+    except Exception as e:
+        print(f"Error creating indexes: {e}")
+
+    
+# Run the setup tasks
+setup()
+
 
 # Landing Page (Login/Sign-Up)
 @app.route("/", methods=["GET", "POST"])
@@ -69,6 +99,8 @@ def signup():
         work_type = request.form.get("work_type")
         preferred_industry = request.form.get("preferred_industry")
         linkedin_profile = request.form.get("linkedin_profile")
+        salary_min = int(request.form.get("salary_min", 0))
+        salary_max = int(request.form.get("salary_max", 0))
 
         # Generate unique User ID
         max_id_doc = users_collection.find_one({}, sort=[("user.user_id", -1)])
@@ -96,9 +128,20 @@ def signup():
                 "preferred_roles": [],
                 "upskilling_interest": [],
                 "saved_jobs": []
+            },
+            "user_job_preferences": {
+                "preferred_salary_range": {
+                    "min": salary_min,
+                    "max": salary_max
+                },
+                "preferred_roles": [],
+                "upskilling_interest": [],
+                "saved_jobs": []
             }
         })
+        
         return render_template("signup.html", success=f"User ID created: {user_id}")
+    
     return render_template("signup.html")
 
 
@@ -109,22 +152,72 @@ def main():
         return redirect(url_for("landing"))
     
     user = users_collection.find_one({"user.user_id": session['user_id']})
-    recommendations = neo4j_graph.run("""
-        MATCH (s:Skill)<-[:REQUIRES_SKILL]-(j:Job)
-        WHERE s.name IN $skills
-        RETURN j LIMIT 10
-    """, skills=user["user_personal"]["skills"]).data()
+    search_results = []
 
-    relevant_jobs = jobs_collection.find({"location": user["user_personal"]["preferred_location"]})
+    # recommendations = neo4j_graph.run("""
+    #     MATCH (s:Skill)<-[:REQUIRES_SKILL]-(j:Job)
+    #     WHERE s.name IN $skills
+    #     RETURN j LIMIT 10
+    # """, skills=user["user_personal"]["skills"]).data()
 
     if request.method == "POST":
+        # Perform full-text search
         search_query = request.form.get("search_query")
         search_results = jobs_collection.find({
             "$text": {"$search": search_query}
-        })
-        return render_template("main.html", user=user, recommendations=recommendations, relevant_jobs=relevant_jobs, search_results=search_results)
+        }, {"_id": 0, "Job Id": 1, "Job Title": 1, "Company": 1, "location": 1, "Salary Range": 1}).limit(10)
 
-    return render_template("main.html", user=user, recommendations=recommendations, relevant_jobs=relevant_jobs)
+    # Find relevant jobs based on OR filter for user's preferences
+    query_criteria = {
+        "$or": [
+            {"Location": user["user_personal"]["preferred_location"]},
+            {"Work Type": user["user_personal"]["work_type"]},
+            {"Preferred Industry": user["user_personal"]["preferred_industry"]},
+            {"Salary Range": user["user_job_preferences"]["preferred_salary_range"]},
+            {"Role": {"$in": user["user_job_preferences"]["preferred_roles"]}},
+            {"Skills": {"$in": user["user_job_preferences"]["upskilling_interest"]}}
+        ]
+    }
+
+    # Fetch jobs and filter for salary range dynamically
+    relevant_jobs = []
+    salary_min = user["user_job_preferences"]["preferred_salary_range"]["min"]
+    salary_max = user["user_job_preferences"]["preferred_salary_range"]["max"]
+
+    for job in jobs_collection.find(query_criteria).limit(30):  
+        job_min, job_max = extract_numeric_salary(job.get("Salary Range"))
+        if job_min is not None and job_max is not None:
+            # Add job if it falls within the user's salary range preference
+            if job_max >= salary_min and job_min <= salary_max:
+                relevant_jobs.append(job)
+        if len(relevant_jobs) >= 20:  # Limit to 20 relevant jobs
+            break
+
+    return render_template(
+        "main.html",
+        user=user,
+        search_results=list(search_results),
+        relevant_jobs=relevant_jobs
+    )
+
+    # return render_template("main.html", user=user, recommendations=recommendations, relevant_jobs=relevant_jobs)
+
+def extract_numeric_salary(salary_range):
+    """Extract min and max salary from a string like '$58K–$104K'."""
+    if not salary_range:
+        return None, None
+
+    try:
+        # Use regex to find all numbers in the salary range
+        salary_values = re.findall(r'\d+', salary_range)
+        if len(salary_values) == 2:
+            min_salary = int(salary_values[0]) * 1000  # Convert to full numbers
+            max_salary = int(salary_values[1]) * 1000
+            return min_salary, max_salary
+    except Exception as e:
+        print(f"Error parsing salary range: {e}")
+
+    return None, None
 
 
 # Saved Jobs
@@ -205,10 +298,14 @@ def profile():
             "user_personal.preferred_location": request.form.get("preferred_location"),
             "user_personal.work_type": request.form.get("work_type"),
             "user_personal.preferred_industry": request.form.get("preferred_industry"),
-            "user_personal.linkedin_profile": request.form.get("linkedin_profile")
+            "user_personal.linkedin_profile": request.form.get("linkedin_profile"),
+            "user_job_preferences.preferred_salary_range.min": int(request.form.get("salary_min", 0)),
+            "user_job_preferences.preferred_salary_range.max": int(request.form.get("salary_max", 0)),
         }
         users_collection.update_one({"user.user_id": session['user_id']}, {"$set": updated_data})
+
         return redirect(url_for("profile"))
+    
     return render_template("profile.html", user=user)
 
 
