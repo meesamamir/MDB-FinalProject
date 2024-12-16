@@ -3,24 +3,39 @@
 {% block content %}
 <h1>Insights</h1>
 
-<h2>Most In-Demand Skills</h2>
-<ul class="collection">
-    {% for trend in skill_trends %}
-        <li class="collection-item">{{ trend.skill }}: {{ trend.demand }} jobs</li>
-    {% endfor %}
-</ul>
+<div>
+    <h2>Most In-Demand Skills</h2>
+    <canvas id="skillDemandChart" width="400" height="200"></canvas>
+    <ul class="collection">
+        {% for trend in skill_trends %}
+            <li class="collection-item">{{ trend.skill }}: {{ trend.demand }} jobs</li>
+        {% endfor %}
+    </ul>
+</div>
 
-<h2>Potential Career Paths</h2>
-<ul class="collection">
-    {% for path in career_paths %}
-        <li class="collection-item">{{ path.next_role }} ({{ path.frequency }} times)</li>
-    {% endfor %}
-</ul>
+<div>
+    <h2>Job Distribution by Role</h2>
+    <canvas id="jobDistributionChart" width="400" height="200"></canvas>
+</div>
 
-<h2>Top Cities for Jobs</h2>
-<ul class="collection">
-    {% for city in best_cities %}
-        <li class="collection-item">{{ city._id }}: {{ city.job_count }} jobs</li>
-    {% endfor %}
-</ul>
+<div>
+    <h2>Average Salary by Work Type</h2>
+    <canvas id="averageSalaryChart" width="400" height="200"></canvas>
+</div>
+
+<h2>Top 10 Companies with Most Job Postings</h2>
+<canvas id="topCompaniesChart" width="400" height="200"></canvas>
+
+
+<div>
+    <h2>Top Cities for Jobs</h2>
+    <ul class="collection">
+        {% for city in best_cities %}
+            <li class="collection-item">{{ city._id }}: {{ city.job_count }} jobs</li>
+        {% endfor %}
+    </ul>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="{{ url_for('static', filename='scripts/charts.js') }}"></script>
 {% endblock %}

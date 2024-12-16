@@ -1,6 +1,10 @@
 from datetime import datetime
+<<<<<<< Updated upstream
 import re
 from flask import Flask, render_template, request, redirect, url_for, session
+=======
+from flask import Flask, jsonify, render_template, request, redirect, url_for, session
+>>>>>>> Stashed changes
 from pymongo import MongoClient
 from py2neo import Graph
 import uuid
@@ -10,7 +14,7 @@ from config import ATLAS_URI, DB_NAME, NEO4J_URI, NEO4J_USER, NEO4J_PASSWORD
 import config
 
 app = Flask(__name__)
-app.secret_key = config.SECRET_KEY
+app.secret_key = 'Secret'
 
 # Set up MongoDB connection
 client = MongoClient(ATLAS_URI)
@@ -84,6 +88,40 @@ def landing():
         else:
             return render_template("landing.html", error="Invalid User ID")
     return render_template("landing.html")
+
+@app.route("/api/skill-demand")
+def skill_demand():
+    try:
+        query = """
+        MATCH (j:Job)-[:REQUIRES_SKILL]->(s:Skill)
+        RETURN s.name AS skill, COUNT(j) AS demand
+        ORDER BY demand DESC LIMIT 10
+        """
+        result = neo4j_graph.run(query).data()
+        return jsonify(result or [])
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route("/api/job-distribution")
+def job_distribution():
+    pipeline = [
+        {"$group": {"_id": "$Role", "count": {"$sum": 1}}},
+        {"$sort": {"count": -1}},
+        {"$limit": 10}
+    ]
+    result = list(jobs_collection.aggregate(pipeline))
+    formatted_result = [{"role": r["_id"], "count": r["count"]} for r in result]
+    return jsonify(formatted_result)
+
+@app.route("/api/average-salary")
+def average_salary():
+    pipeline = [
+        {"$group": {"_id": "$Work Type", "average_salary": {"$avg": "$Salary Range"}}},
+        {"$sort": {"average_salary": -1}}
+    ]
+    result = list(jobs_collection.aggregate(pipeline))
+    formatted_result = [{"work_type": r["_id"], "average_salary": round(r["average_salary"], 2)} for r in result]
+    return jsonify(formatted_result)
 
 
 # Sign-Up
@@ -219,6 +257,29 @@ def extract_numeric_salary(salary_range):
 
     return None, None
 
+# Endpoint for Top 10 Most In-Demand Skills
+@app.route("/api/top-skills")
+def top_skills():
+    query = """
+        MATCH (s:Skill)<-[:REQUIRES_SKILL]-(j:Job)
+        RETURN s.name AS skill, COUNT(j) AS demand
+        ORDER BY demand DESC
+        LIMIT 10
+    """
+    result = neo4j_graph.run(query).data()
+    return jsonify(result)
+
+# Endpoint for Top 10 Companies with Most Job Postings
+@app.route("/api/top-companies")
+def top_companies():
+    query = """
+        MATCH (c:Company)<-[:POSTED_BY]-(j:Job)
+        RETURN c.name AS company, COUNT(j) AS job_count
+        ORDER BY job_count DESC
+        LIMIT 10
+    """
+    result = neo4j_graph.run(query).data()
+    return jsonify(result)
 
 # Saved Jobs
 @app.route("/saved_jobs")
@@ -315,6 +376,6 @@ def logout():
     session.clear()
     return redirect(url_for("landing"))
 
-
 if __name__ == "__main__":
-    app.run(debug=True) 
+    app.run(debug=True, port=5001)  # Change 5001 to any available port
+ 
