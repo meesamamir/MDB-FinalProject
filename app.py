@@ -11,18 +11,18 @@ from config import ATLAS_URI, DB_NAME, NEO4J_URI, NEO4J_USER, NEO4J_PASSWORD
 import config
 
 app = Flask(__name__)
-app.secret_key = 'Secret'
+app = Flask(__name__)
+app.secret_key = "secret"
 
 # Set up MongoDB connection
-client = MongoClient(ATLAS_URI)
-db = client[DB_NAME]
+client = MongoClient("mongodb://localhost:27017/") 
+db = client['jobfusion']
 
 users_collection = db['users']
 jobs_collection = db['jobs']
 
 # Set up Neo4j connection
-neo4j_graph = Graph(NEO4J_URI, auth=(NEO4J_USER, NEO4J_PASSWORD))
-
+neo4j_graph = Graph("bolt://localhost:7687", auth=("neo4j", "neo4jneo4j"))
 # Verify Databases connection
 def verify_connection():
     try:
@@ -285,7 +285,7 @@ def saved_jobs():
         return redirect(url_for("landing"))
     
     user = users_collection.find_one({"user.user_id": session['user_id']})
-    saved_jobs = jobs_collection.find({"Job Id": {"$in": [int(x) for x user["user_job_preferences"]["saved_jobs"]]}})
+    saved_jobs = jobs_collection.find({"Job Id": {"$in": [int(x) for x in user["user_job_preferences"]["saved_jobs"]]}})
     return render_template("saved_jobs.html", saved_jobs=saved_jobs)
 
 
@@ -374,5 +374,5 @@ def logout():
     return redirect(url_for("landing"))
 
 if __name__ == "__main__":
-    app.run(debug=True, port=5001)  # Change 5001 to any available port
+    app.run(debug=True, port=5002)  # Change 5001 to any available port
  
