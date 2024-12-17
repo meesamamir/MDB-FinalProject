@@ -26,7 +26,7 @@ python mock_users.py
 ```
 **setup neo 4j (may take several minutes)**
 ```
-python neo4jImport.py
+python populate_neo4j.py
 ```
 **setup current saved jobs relationship**
 ```
