@@ -2,3 +2,4 @@ config.py
 job_descriptions.csv
 jobs_filtered_sampled.csv
 __pycache__
+static/interactive_graph.html

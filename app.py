@@ -2,27 +2,27 @@ from datetime import datetime
 import re
 from flask import Flask, render_template, request, redirect, url_for, session
 from flask import Flask, jsonify, render_template, request, redirect, url_for, session
+from neo4j import GraphDatabase
 from pymongo import MongoClient
 from py2neo import Graph
 import uuid
+from pyvis.network import Network
+import os
+import jsonpickle, pyvis
 from config import ATLAS_URI, DB_NAME, NEO4J_URI, NEO4J_USER, NEO4J_PASSWORD
 
-# Load configuration
-import config
-
-app = Flask(__name__)
 app = Flask(__name__)
 app.secret_key = "secret"
 
-# Set up MongoDB connection
-client = MongoClient("mongodb://localhost:27017/") 
-db = client['jobfusion']
+client = MongoClient(ATLAS_URI)
+db = client[DB_NAME]
 
 users_collection = db['users']
 jobs_collection = db['jobs']
 
 # Set up Neo4j connection
-neo4j_graph = Graph("bolt://localhost:7687", auth=("neo4j", "neo4jneo4j"))
+neo4j_graph = Graph(NEO4J_URI, auth=(NEO4J_USER, NEO4J_PASSWORD))
+
 # Verify Databases connection
 def verify_connection():
     try:
@@ -110,15 +110,15 @@ def job_distribution():
     formatted_result = [{"role": r["_id"], "count": r["count"]} for r in result]
     return jsonify(formatted_result)
 
-@app.route("/api/average-salary")
-def average_salary():
-    pipeline = [
-        {"$group": {"_id": "$Work Type", "average_salary": {"$avg": "$Salary Range"}}},
-        {"$sort": {"average_salary": -1}}
-    ]
-    result = list(jobs_collection.aggregate(pipeline))
-    formatted_result = [{"work_type": r["_id"], "average_salary": round(r["average_salary"], 2)} for r in result]
-    return jsonify(formatted_result)
+# @app.route("/api/average-salary")
+# def average_salary():
+#     pipeline = [
+#         {"$group": {"_id": "$Work Type", "average_salary": {"$avg": "$Salary Range"}}},
+#         {"$sort": {"average_salary": -1}}
+#     ]
+#     result = list(jobs_collection.aggregate(pipeline))
+#     formatted_result = [{"work_type": r["_id"], "average_salary": round(r["average_salary"], 2)} for r in result]
+#     return jsonify(formatted_result)
 
 
 # Sign-Up
@@ -320,17 +320,17 @@ def remove_job(job_id):
 # Insights Page
 @app.route("/insights")
 def insights():
-    skill_trends = neo4j_graph.run("""
-        MATCH (j:Job)-[:REQUIRES_SKILL]->(s:Skill)
-        RETURN s.name AS skill, COUNT(j) AS demand
-        ORDER BY demand DESC LIMIT 10
-    """).data()
+    # skill_trends = neo4j_graph.run("""
+    #     MATCH (j:Job)-[:REQUIRES_SKILL]->(s:Skill)
+    #     RETURN s.name AS skill, COUNT(j) AS demand
+    #     ORDER BY demand DESC LIMIT 10
+    # """).data()
 
-    career_paths = neo4j_graph.run("""
-        MATCH (s:Skill)<-[:REQUIRES_SKILL]-(j:Job)-[:LEADS_TO]->(nextJob:Job)
-        RETURN nextJob.title AS next_role, COUNT(*) AS frequency
-        ORDER BY frequency DESC LIMIT 5
-    """).data()
+    # career_paths = neo4j_graph.run("""
+    #     MATCH (s:Skill)<-[:REQUIRES_SKILL]-(j:Job)-[:LEADS_TO]->(nextJob:Job)
+    #     RETURN nextJob.title AS next_role, COUNT(*) AS frequency
+    #     ORDER BY frequency DESC LIMIT 5
+    # """).data()
 
     best_cities = jobs_collection.aggregate([
         {"$group": {"_id": "$location", "job_count": {"$sum": 1}}},
@@ -338,7 +338,8 @@ def insights():
         {"$limit": 10}
     ])
 
-    return render_template("insights.html", skill_trends=skill_trends, career_paths=career_paths, best_cities=best_cities)
+    # return render_template("insights.html", skill_trends=skill_trends, career_paths=career_paths, best_cities=best_cities)
+    return render_template("insights.html",best_cities=best_cities)
 
 
 # Profile Page
@@ -372,6 +373,67 @@ def profile():
 def logout():
     session.clear()
     return redirect(url_for("landing"))
+
+
+# Neo4j graph nodes visualization
+def generate_graph():
+    driver = GraphDatabase.driver(NEO4J_URI, auth=(NEO4J_USER, NEO4J_PASSWORD))
+    net = Network(notebook=False, height="600px", width="100%", bgcolor="#ffffff", font_color="black")
+
+    # Query Neo4j for data
+    with driver.session() as session:
+        result = session.run(
+            "MATCH (j:Job)-[r:LOCATED_IN]->(l:Location) RETURN j, l LIMIT 100"
+        )
+
+        for record in result:
+            job = record["j"]
+            location = record["l"]
+
+            # Access job properties
+            job_id = str(job.get('Job Id', f"job_{record.elementId}"))
+            job_title = job['Job Title'] if 'Job Title' in job else "Unknown Job"
+            job_role = job['Role'] if 'Role' in job else "Unknown Role"
+            job_location = job['location'] if 'location' in job else "Unknown Location"
+
+            # Access location properties
+            location_id = str(location['id']) if 'id' in location else f"location_{hash(location)}"
+            city = location['city'] if 'city' in location else "Unknown City"
+            country = location['country'] if 'country' in location else "Unknown Country"
+
+            # Add job node with labels
+            net.add_node(
+                job_id,
+                label=f"Job: {job_title}",
+                title=(
+                    f"Job ID: {job_id}\n"
+                    f"Role: {job_role}\n"
+                    f"Location: {job_location}"
+                ),
+                color="red"
+            )
+
+            # Add location node with labels
+            net.add_node(
+                location_id,
+                label=f"City: {city}",
+                title=f"City: {city}\nCountry: {country}",
+                color="blue"
+            )
+
+            # Add edge between job and location
+            net.add_edge(
+                job_id,
+                location_id,
+                title="LOCATED_IN"
+            )
+
+    # Save graph in the 'templates' directory
+    net.save_graph("static/interactive_graph.html")
+    driver.close()
+
+generate_graph()
+
 
 if __name__ == "__main__":
     app.run(debug=True, port=5002)  # Change 5001 to any available port
