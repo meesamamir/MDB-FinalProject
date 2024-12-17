@@ -12,7 +12,7 @@ jobs_collection = db['jobs']  # Replace with your job collection name
 
 
 print("Populating jobs collection...")
-cities = jobs_collection.distinct("location");
+cities = jobs_collection.distinct("location")
 job_ids = [str(x["Job Id"]) for x in jobs_collection.find({"Country": "USA"}, {"Job Id": 1})]
 
 # Step 2: Generate mock users with saved jobs referencing job IDs

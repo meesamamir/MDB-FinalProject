@@ -68,7 +68,6 @@ def setup():
     except Exception as e:
         print(f"Error creating indexes: {e}")
 
-    
 # Run the setup tasks
 setup()
 

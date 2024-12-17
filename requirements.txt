@@ -1,0 +1,7 @@
+Flask==3.0.0
+pymongo==4.6.1
+py2neo==2021.2.3
+neo4j==5.14.0
+pyvis==0.3.2
+faker==19.6.2
+jsonpickle==3.0.2
