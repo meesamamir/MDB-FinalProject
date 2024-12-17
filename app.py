@@ -110,15 +110,15 @@ def job_distribution():
     formatted_result = [{"role": r["_id"], "count": r["count"]} for r in result]
     return jsonify(formatted_result)
 
-# @app.route("/api/average-salary")
-# def average_salary():
-#     pipeline = [
-#         {"$group": {"_id": "$Work Type", "average_salary": {"$avg": "$Salary Range"}}},
-#         {"$sort": {"average_salary": -1}}
-#     ]
-#     result = list(jobs_collection.aggregate(pipeline))
-#     formatted_result = [{"work_type": r["_id"], "average_salary": round(r["average_salary"], 2)} for r in result]
-#     return jsonify(formatted_result)
+@app.route("/api/average-salary")
+def average_salary():
+    pipeline = [
+        {"$group": {"_id": "$Work Type", "average_salary": {"$avg": "$Salary Range"}}},
+        {"$sort": {"average_salary": -1}}
+    ]
+    result = list(jobs_collection.aggregate(pipeline))
+    formatted_result = [{"work_type": r["_id"], "average_salary": round(r["average_salary"], 2)} for r in result]
+    return jsonify(formatted_result)
 
 
 # Sign-Up
@@ -204,10 +204,10 @@ def main():
         """, user_id=session['user_id']).data()
 
     job_ids = [int(x["id"]) for x in recommender]
-    print("******")
+    # print("******")
     print(job_ids)
     recommendations = list(jobs_collection.find({"Job Id": {"$in": job_ids}}).limit(10))
-    print(recommendations)
+    # print(recommendations)
 
     if request.method == "POST":
         # Perform full-text search
@@ -406,55 +406,67 @@ def generate_graph():
     driver = GraphDatabase.driver(NEO4J_URI, auth=(NEO4J_USER, NEO4J_PASSWORD))
     net = Network(notebook=False, height="600px", width="100%", bgcolor="#ffffff", font_color="black")
 
-    # Query Neo4j for data
+    # Query Neo4j for Company -> Job -> Skill relationships
     with driver.session() as session:
         result = session.run(
-            "MATCH (j:Job)-[r:LOCATED_IN]->(l:Location) RETURN j, l LIMIT 100"
+            "MATCH (j:Job)-[:POSTED_BY]->(c:Company) "
+            "OPTIONAL MATCH (j)-[:REQUIRES_SKILL]->(s:Skill) "
+            "RETURN c, j, s "
+            "LIMIT 100"
         )
 
         for record in result:
+            # Extract nodes
+            company = record["c"]
             job = record["j"]
-            location = record["l"]
+            skill = record["s"]
 
-            # Access job properties
-            job_id = str(job.get('Job Id', f"job_{record.elementId}"))
-            job_title = job['Job Title'] if 'Job Title' in job else "Unknown Job"
-            job_role = job['Role'] if 'Role' in job else "Unknown Role"
-            job_location = job['location'] if 'location' in job else "Unknown Location"
+            # print("company: ", company)
+            # print("job: ", job)
+            # print("skill: ", skill)
 
-            # Access location properties
-            location_id = str(location['id']) if 'id' in location else f"location_{hash(location)}"
-            city = location['city'] if 'city' in location else "Unknown City"
-            country = location['country'] if 'country' in location else "Unknown Country"
+            # Add Company node
+            if company:
+                company_id = str(company.id)
+                company_name = company.get('name', "Unknown Company")
+                net.add_node(
+                    company_id,
+                    label=f"Company: {company_name}",
+                    title=f"Company: {company_name}",
+                    color="green"
+                )
+            # Add Job node
+            if job:
+                job_id = str(job.id)
+                job_title = job.get('title', "Unknown Job")
+                role = job.get('role', "Unknown Role")
+                net.add_node(
+                    job_id,
+                    label=f"Job: {job_title}",
+                    title=(
+                        f"Job ID: {job.get('job_id', 'N/A')}\n"
+                        f"Role: {role}\n"
+                        f"Location: {job.get('location', 'N/A')}"
+                    ),
+                    color="red"
+                )
+                # Connect Job to Company
+                if company:
+                    net.add_edge(company_id, job_id, title="POSTED_BY")
 
-            # Add job node with labels
-            net.add_node(
-                job_id,
-                label=f"Job: {job_title}",
-                title=(
-                    f"Job ID: {job_id}\n"
-                    f"Role: {job_role}\n"
-                    f"Location: {job_location}"
-                ),
-                color="red"
-            )
+            # Add Skill node and connect it to Job
+            if skill:
+                skill_id = str(skill.id)
+                skill_name = skill.get('name', "Unknown Skill")
+                net.add_node(
+                    skill_id,
+                    label=f"Skill: {skill_name}",
+                    title=f"Skill: {skill_name}",
+                    color="blue"
+                )
+                net.add_edge(job_id, skill_id, title="REQUIRES_SKILL")
 
-            # Add location node with labels
-            net.add_node(
-                location_id,
-                label=f"City: {city}",
-                title=f"City: {city}\nCountry: {country}",
-                color="blue"
-            )
-
-            # Add edge between job and location
-            net.add_edge(
-                job_id,
-                location_id,
-                title="LOCATED_IN"
-            )
-
-    # Save graph in the 'templates' directory
+    # Save the graph to 'static/interactive_graph.html'
     net.save_graph("static/interactive_graph.html")
     driver.close()
 

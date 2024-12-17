@@ -3,3 +3,6 @@ job_descriptions.csv
 jobs_filtered_sampled.csv
 __pycache__
 static/interactive_graph.html
+data_clean.py
+mongodb_UserImport.py
+neo4jImport.py
