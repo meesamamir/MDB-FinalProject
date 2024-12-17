@@ -16,11 +16,11 @@ NEO4J_URI = "bolt://localhost:7687"
 NEO4J_USER = "username"
 NEO4J_PASSWORD = "password"
 ```
-**import jobs collection**
+**import jobs collection into MongoDB**
 ```
 mongoimport --db jobs --collection jobs --type csv --file jobs_10k.csv --headerline
 ```
-**import mock users**
+**import mock users into MongoDB**
 ```
 python mock_users.py
 ```
@@ -34,7 +34,7 @@ python savedImport.py
 ```
 
 ## Run the app
-`The command below starts the Flask development server on http://127.0.0.1:5000`
+`Make sure Neo4j is running before running the app. The command below starts the Flask development server on http://127.0.0.1:5002`
 ```
 python app.py
 ```
