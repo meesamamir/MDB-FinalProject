@@ -81,6 +81,39 @@
             <p>No relevant jobs found.</p>
         {% endif %}
     </div>
+
+    <h5>Recommended Jobs</h5>
+    <p>Users with similar skills saved these jobs</p>
+    <div class="scrollable-container">
+        {% if recommended_jobs %}
+            <table class="highlight">
+                <thead>
+                    <tr>
+                        <th>Job Title</th>
+                        <th>Company Name</th>
+                        <th>City</th>
+                        <th>Salary Range</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for job in recommended_jobs %}
+                        <tr>
+                            <td>{{ job['Job Title'] }}</td>
+                            <td>{{ job['Company'] }}</td>
+                            <td>{{ job['location'] }}</td>
+                            <td>{{ job['Salary Range'] }}</td>
+                            <td>
+                                <button class="btn green save-btn" data-job-id="{{ job['Job Id'] }}">Save</button>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p>No recommended jobs found.</p>
+        {% endif %}
+    </div>
 </div>
 
 <script>

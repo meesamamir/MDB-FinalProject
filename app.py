@@ -174,6 +174,11 @@ def signup():
                 "saved_jobs": []
             }
         })
+
+        neo4j_graph.run("""
+                MERGE (u:User {user_id: $user_id})
+                SET u.skills = $skills
+            """, user_id=user_id, skills=skills)
         
         return render_template("signup.html", success=f"User ID created: {user_id}")
     
@@ -189,11 +194,20 @@ def main():
     user = users_collection.find_one({"user.user_id": session['user_id']})
     search_results = []
 
-    # recommendations = neo4j_graph.run("""
-    #     MATCH (s:Skill)<-[:REQUIRES_SKILL]-(j:Job)
-    #     WHERE s.name IN $skills
-    #     RETURN j LIMIT 10
-    # """, skills=user["user_personal"]["skills"]).data()
+    recommender = neo4j_graph.run("""
+            MATCH (me:User {user_id: $user_id})
+            MATCH (other:User)-[:SAVED]->(j:Job)
+            WHERE other.user_id <> me.user_id
+            AND other.skills = me.skills
+            RETURN j.job_id as id
+            LIMIT 10
+        """, user_id=session['user_id']).data()
+
+    job_ids = [int(x["id"]) for x in recommender]
+    print("******")
+    print(job_ids)
+    recommendations = list(jobs_collection.find({"Job Id": {"$in": job_ids}}).limit(10))
+    print(recommendations)
 
     if request.method == "POST":
         # Perform full-text search
@@ -232,10 +246,9 @@ def main():
         "main.html",
         user=user,
         search_results=list(search_results),
-        relevant_jobs=relevant_jobs
+        relevant_jobs=relevant_jobs,
+        recommended_jobs=recommendations
     )
-
-    # return render_template("main.html", user=user, recommendations=recommendations, relevant_jobs=relevant_jobs)
 
 def extract_numeric_salary(salary_range):
     """Extract min and max salary from a string like '$58K–$104K'."""
@@ -301,6 +314,13 @@ def save_job(job_id):
             {"user.user_id": session['user_id']},
             {"$push": {"user_job_preferences.saved_jobs": job_id}}
         )
+
+        neo4j_graph.run("""
+                MERGE (u:User {user_id: $user_id})
+                MERGE (j:Job {job_id: $job_id})
+                MERGE (u)-[:SAVED]->(j)
+            """, user_id=session['user_id'], job_id=job_id)
+
     return redirect(url_for("main"))
 
 
@@ -314,6 +334,12 @@ def remove_job(job_id):
         {"user.user_id": session['user_id']},
         {"$pull": {"user_job_preferences.saved_jobs": job_id}}
     )
+
+    neo4j_graph.run("""
+        MATCH (u:User {user_id: $user_id})-[r:SAVED]->(j:Job {job_id: $job_id})
+        DELETE r
+    """, user_id=session['user_id'], job_id=job_id)
+
     return redirect(url_for("saved_jobs"))
 
 
