@@ -46,7 +46,7 @@ def create_mock_user(id):
 
 print("Populating users collection...")
 users_collection.drop()  # Clear existing users (optional)
-mock_users = [create_mock_user(id) for id in range(6, 10000)]
+mock_users = [create_mock_user(id) for id in range(0, 1000)]
 users_collection.insert_many(mock_users)
 
 print("Mock data generated successfully.")
