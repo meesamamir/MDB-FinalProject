@@ -1,8 +1,19 @@
 # MDB-FinalProject
 
-Original data from https://www.kaggle.com/datasets/ravindrasinghrana/job-description-dataset/data
+JobFusion is a web-based job-matching platform that provides personalized job recommendations and insightful analytics. The system uses two database technologies:
+1. MongoDB: For storing user profiles and job postings, supporting full-text search.
+2. Neo4j: For graph-based recommendations and analytics, enabling advanced insights into skills, jobs, and career paths.
 
-## to setup and run our app
+Users can create detailed profiles, receive personalized job recommendations, search for jobs, save opportunities, and explore analytics such as skill demand trends and best cities for job seekers. The platform focuses on simplicity and utility, ensuring a seamless experience. Original dataset from https://www.kaggle.com/datasets/ravindrasinghrana/job-description-dataset/data
+<br/><br/>
+This was our final group project for ECE:5845 Modern Databases at the University of Iowa during the Fall 2024 semester.
+
+This group project had three members:
+- Meesam Amir Syed
+- Kasra Shahrivar
+- Eli Paulsen
+
+## to setup and run the app
 **Install requirements**
 ```
 pip install flask pymongo py2neo
